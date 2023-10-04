@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from RndPassword import Random_Pass
+import json
 #import random
 
 
@@ -27,18 +28,49 @@ def getting_data():
         is_ok=messagebox.askokcancel(title=website, message=f"These are the details entered:\nEmail: {mail}\nPassword: {password}\nIs it okay to save")
         
         if is_ok:
-            data={"website":website,
-            "username/mail":mail,
-                "password":password}
-            datas.append(data)
-            print(data)
-            with open("datas.txt","a") as file:
-                file.writelines(f"Website: {data['website']} | mail/username: {data['username/mail']} | Password: {data['password']}\n")
+            new_data={
+                website: {
+                    "email": mail,
+                    "password": password
+                }
+            }
+            try:
+                with open("datas.json","r") as file:
+                    data = json.load(file)
+            except FileNotFoundError:
+                with open("datas.json","w") as file:
+                    json.dump(new_data,file,indent= 4)
+            else:
+                data.update(new_data)
+                
+                with open("datas.json","w") as file:
+                    json.dump(data, file, indent=4)
+            finally:
+                web_entry.delete(0,END)
+                pass_entry.delete(0,END)
+                
             
-            web_entry.delete(0,END)
-            pass_entry.delete(0,END)
     else:
         messagebox.showwarning(title="Warning",message="Make sure not to left any field empty!")
+        
+        
+def find_password():
+    web_search=web_entry.get()
+    try:
+        with open("datas.json","r") as file:
+            loaded_file=json.load(file)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error",message="File not found")
+    
+    try:
+        searched_pass=loaded_file[web_search]["password"]
+        messagebox.showinfo(title=web_search, message=f"Website: {web_search}\nPassword: {searched_pass}")
+    except KeyError:
+        messagebox.showinfo(title="Error",message="Website not found")
+    
+
+    
+    
     
     
         
@@ -66,9 +98,12 @@ user_label.grid(column=0,row=2)
 pass_label=Label(text="Password:")
 pass_label.grid(column=0,row=3)
 
-web_entry=Entry(width=35)
+web_entry=Entry(width=21)
 web_entry.grid(column=1,row=1,columnspan=2)
 web_entry.focus()
+
+web_button=Button(text="search",command=find_password)
+web_button.grid(column=2,row=1)
 
 user_entry=Entry(width=35)
 user_entry.grid(column=1,row=2,columnspan=2)
